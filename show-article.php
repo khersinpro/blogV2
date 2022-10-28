@@ -1,22 +1,17 @@
-<?php 
-    // filtre de le requette, recupération des données, recupération de l'id de la requete
+<?php   
+    $articleDb = require_once __DIR__.'/database/models/articlesDb.php';
     $_GET = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    $filename =  __DIR__.'/data/articles.json';
-    $articles = [];
+    $article = [];
     $id = $_GET["id"] ?? "";
-
+    
     if(!$id) {
         header('Location: /');
     } else {
-        if(file_exists($filename)){
-            $articles = json_decode(file_get_contents($filename), true) ?? [];
-            // récupération de la clé de l'article grâce a son ID
-            $articleIndex = array_search($id, array_column($articles, 'id'));
-            // Récupération des données de l'article grâce a la clés $articleIndex
-            $article = $articles[$articleIndex];
+        $article = $articleDb->fetchOne($id);    
+        if(!$article){
+            header('Location: /');
         }
     }
-
 
 ?>
 

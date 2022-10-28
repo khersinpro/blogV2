@@ -1,17 +1,15 @@
 <?php
-    $filename = __DIR__.'/data/articles.json';
-    $articles = [];
+    $articleDb = require_once __DIR__.'/database/models/articlesDb.php';
+    $articles = $articleDb->fetchAll();
     $categories = [];
 
     // Logique de récupération du choix de catégorie d'article par l'utilisateur
     $_GET = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     $selectedCat = $_GET['cat'] ?? '';
 
-    if(file_exists($filename)) {
-        $articles = json_decode(file_get_contents($filename), true);
+    if(count($articles)) {
         // récupération des toutes les catégorie des articles
         $cattmp = array_map(fn($a) => $a['category'], $articles);
-
         // Récupération du nb d'article par catégorie
         $categories = array_reduce($cattmp, function($acc, $cat) {
             if(isset($acc[$cat])) {

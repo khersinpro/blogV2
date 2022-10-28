@@ -1,11 +1,12 @@
 <?php
+$articleDb = require_once __DIR__.'/database/models/articlesDb.php';
+
 // Messages d'erreur a afficher
 const ERROR_REQUIRED = 'Veuillez renseigner ce champ';
 const ERROR_TOO_SHORT = 'Le titre est trop court';
 const ERROR_CONTENT_TOO_SHORT = 'L\'article est trop court';
 const ERROR_IMAGE_URL = 'L\'image doit être une url valide';
 
-$filename = __DIR__.'/data/articles.json';
 // Tableau de gestion d'erreur
 $errors = [
     'title' => '',
@@ -20,16 +21,10 @@ $category = "";
 $_GET = filter_input_array(INPUT_GET, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $id = $_GET['id'] ?? '';
 
-if(file_exists($filename)) {
-    $articles = json_decode(file_get_contents($filename), true) ?? []; 
-}
-
 // Si la requete cocerne une modification d'article
 if($id){
-    // Récupération de l'index de l'article
-    $articleIndex = array_search($id, array_column($articles, 'id'));
-    // Récupération des infos de l'article grace a son index ($articleIndex)
-    $article = $articles[$articleIndex];
+    $article = $articleDb->fetchOne($id);
+    print_r($article);
     // Stockage des données de l'article dans les variables destinées a l'affichage das les inputs 
     $title = $article['title'];
     $image = $article['image'];
@@ -81,21 +76,19 @@ if($_SERVER['REQUEST_METHOD'] === 'POST')  {
     // Vérifie si le tableau d'erreur est vide grace a empty()
     if(empty(array_filter($errors, fn($e) => $e !== ''))) {
         if($id) { // Si il y a un $id en param , on modifie
-            $articles[$articleIndex]["title"] = $title;
-            $articles[$articleIndex]["image"] = $image;
-            $articles[$articleIndex]["category"] = $category;
-            $articles[$articleIndex]["content"] = $content;
+            $article['title'] = $title;
+            $article['content'] = $content;
+            $article['category'] = $category;
+            $article['image'] = $image;
+            $articleDb->updateOne($article);
         } else { // Sinon on créer un article dans $articles
-            $articles = [...$articles, [
+            $articleDb->createOne([
                 'title' => $title,
-                'image' => $image,
                 'category' => $category,
-                'content' => $content,
-                'id' => time()
-            ]];
+                'image' => $image,
+                'content' => $content
+            ]);
         }
-        // Sauvegarde des articles puis redirection
-        file_put_contents($filename, json_encode($articles));
         header('Location: /');
     }
 }
